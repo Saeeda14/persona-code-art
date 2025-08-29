@@ -1,0 +1,71 @@
+name: Deploy Docker Image to ECR 
+
+on: 
+  push: 
+    branches: [ main ]
+  
+jobs: 
+  build: 
+    name: Build Image 
+    runs-on: ubuntu-latest
+
+    steps: 
+    - name: check out code 
+      uses: actions/checkout@v3
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with: 
+        aws-region: us-east-1
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Build, tag, and push docker image to Amazon ECR
+      env:
+        REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        REPOSITORY: my-dev-ecr-repo
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        docker buildx create --use 
+        docker buildx build --platform linux/amd64,linux/arm64 -t $REGISTRY/$REPOSITORY:$IMAGE_TAG --push .
+
+
+  deploy:
+    name: SSH to EC2 & Run
+    needs: build
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Deploy to EC2
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          # install docker 
+          sudo apt update 
+          sudo apt install docker.io -y
+
+          # install unzip for aws cli command later 
+          sudo apt install unzip -y 
+
+          #install aws-cli 
+          curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip
+            sudo rm -rf /tmp/aws
+            sudo unzip -q /tmp/awscliv2.zip -d /tmp
+            sudo /tmp/aws/install --update
+
+          # login to ECR
+          aws ecr get-login-password --region us-east-1 \
+            | sudo docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com
+
+          sudo docker rm -f myapp || true
+
+          # run new container
+          sudo docker run -d -p 80:80 --name myapp \
+            ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/my-dev-ecr-repo:${{ github.sha }}
