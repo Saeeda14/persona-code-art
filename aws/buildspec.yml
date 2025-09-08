@@ -23,3 +23,13 @@ phases:
       - echo Build completed on `date`
       - echo Pushing the Docker image...
       - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG
+        # --- S3 artifact info (for CodePipeline/CodeBuild) ---
+      # Write the built image URI to a small file that will be uploaded to your S3 artifacts bucket.
+      - echo "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG" > image_uri.txt
+
+artifacts:
+  files:
+    - aws/appspec.yml
+    - aws/scripts/**/*
+    - image_uri.txt            # optional helper file
+  discard-paths: yes           # <<< puts appspec.yml at ZIP root
