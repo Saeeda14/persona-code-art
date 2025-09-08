@@ -1,35 +1,56 @@
 version: 0.2
 
-env:
-  variables:
-    AWS_ACCOUNT_ID: "886687538523"        # <-- your AWS account ID (no dashes)
-    AWS_DEFAULT_REGION: "us-east-1"       # <-- region of your ECR repo
-    IMAGE_REPO_NAME: "my-dev-ecr-repo"    # <-- your ECR repository name
-    IMAGE_TAG: "latest" 
-
 phases:
   pre_build:
     commands:
-      - echo Logging in to Amazon ECR...
-      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+      - echo "hello from pre_build"
   build:
     commands:
-      - echo Build started on `date`
-      - echo Building the Docker image...          
-      - docker build -t $IMAGE_REPO_NAME:$IMAGE_TAG .
-      - docker tag $IMAGE_REPO_NAME:$IMAGE_TAG $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG      
+      - echo "hello from build"
   post_build:
     commands:
-      - echo Build completed on `date`
-      - echo Pushing the Docker image...
-      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG
-        # --- S3 artifact info (for CodePipeline/CodeBuild) ---
-      # Write the built image URI to a small file that will be uploaded to your S3 artifacts bucket.
-      - echo "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG" > image_uri.txt
+      - echo "hello from post_build"
 
 artifacts:
   files:
-    - aws/appspec.yml
-    - aws/scripts/**/*
-    - image_uri.txt            # optional helper file
-  discard-paths: yes           # <<< puts appspec.yml at ZIP root
+    - README.md
+
+
+
+
+
+# version: 0.2
+
+# env:
+#   variables:
+#     AWS_ACCOUNT_ID: "886687538523"        # <-- your AWS account ID (no dashes)
+#     AWS_DEFAULT_REGION: "us-east-1"       # <-- region of your ECR repo
+#     IMAGE_REPO_NAME: "my-dev-ecr-repo"    # <-- your ECR repository name
+#     IMAGE_TAG: "latest" 
+
+# phases:
+#   pre_build:
+#     commands:
+#       - echo Logging in to Amazon ECR...
+#       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+#   build:
+#     commands:
+#       - echo Build started on `date`
+#       - echo Building the Docker image...          
+#       - docker build -t $IMAGE_REPO_NAME:$IMAGE_TAG .
+#       - docker tag $IMAGE_REPO_NAME:$IMAGE_TAG $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG      
+#   post_build:
+#     commands:
+#       - echo Build completed on `date`
+#       - echo Pushing the Docker image...
+#       - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG
+#         # --- S3 artifact info (for CodePipeline/CodeBuild) ---
+#       # Write the built image URI to a small file that will be uploaded to your S3 artifacts bucket.
+#       - echo "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG" > image_uri.txt
+
+# artifacts:
+#   files:
+#     - aws/appspec.yml
+#     - aws/scripts/**/*
+#     - image_uri.txt            # optional helper file
+#   discard-paths: yes           # <<< puts appspec.yml at ZIP root
