@@ -1,0 +1,73 @@
+- name: Deploy container from ECR
+  hosts: app
+  become: yes
+  vars:
+    aws_region: "us-east-1"
+    aws_account_id: ""             # passed via -e from workflow
+    repository: "my-dev-ecr-repo"  # your ECR repo name
+    image_tag: ""                  # passed via -e from workflow
+    container_name: "myapp"
+    host_port: 80
+    container_port: 80
+
+    registry: "{{ aws_account_id }}.dkr.ecr.{{ aws_region }}.amazonaws.com"
+    image_ref: "{{ registry }}/{{ repository }}:{{ image_tag }}"
+
+  pre_tasks:
+    - name: Update apt cache (Debian/Ubuntu)
+      apt:
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+
+  tasks:
+    - name: Install base packages (Debian/Ubuntu)
+      apt:
+        name:
+          - docker.io
+          - unzip
+          - curl
+        state: present
+      when: ansible_os_family == "Debian"
+
+    - name: Ensure Docker service running
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Install AWS CLI v2 if missing
+      shell: |
+        if ! command -v aws >/dev/null 2>&1; then
+          curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip
+          rm -rf /tmp/aws
+          unzip -q /tmp/awscliv2.zip -d /tmp
+          /tmp/aws/install --update
+        fi
+      args:
+        warn: false
+
+    - name: Get ECR login password
+      command: "aws ecr get-login-password --region {{ aws_region }}"
+      register: ecr_pwd
+      changed_when: false
+
+    - name: Docker login to ECR
+      community.docker.docker_login:
+        registry_url: "{{ registry }}"
+        username: AWS
+        password: "{{ ecr_pwd.stdout }}"
+
+    - name: Pull the image
+      community.docker.docker_image:
+        name: "{{ image_ref }}"
+        source: pull
+
+    - name: Run/replace the container
+      community.docker.docker_container:
+        name: "{{ container_name }}"
+        image: "{{ image_ref }}"
+        state: started
+        recreate: true
+        restart_policy: always
+        published_ports:
+          - "{{ host_port }}:{{ container_port }}"
