@@ -43,8 +43,8 @@
           unzip -q /tmp/awscliv2.zip -d /tmp
           /tmp/aws/install --update
         fi
-      args:
-        warn: false
+      # args:
+      #   warn: false
 
     - name: Get ECR login password
       command: "aws ecr get-login-password --region {{ aws_region }}"
