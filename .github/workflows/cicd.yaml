@@ -46,7 +46,7 @@ jobs:
       - name: Install Ansible + collections
         run: |
           python3 -m pip install --upgrade pip
-          pip install ansible-core
+          pip install ansible-core boto3 botocore 
           ansible-galaxy collection install amazon.aws community.docker
 
       - name: Configure AWS credentials
@@ -61,10 +61,27 @@ jobs:
           echo "${{ secrets.EC2_SSH_KEY }}" > my_ec2_key
           chmod 600 my_ec2_key
 
-      # - name: Add EC2 host key to known_hosts
-      #   run: |
-      #     mkdir -p ~/.ssh
-      #     ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+      - name: Print Ansible + Python env info
+        run: |
+          which ansible || true
+          ansible --version || true
+          python3 --version
+          python3 -c "import sys, pkgutil; print('site:', sys.executable); print('boto3:', bool(pkgutil.find_loader('boto3'))); print('botocore:', bool(pkgutil.find_loader('botocore')))"
+
+      - name: Show repo layout (sanity check)
+        run: |
+          pwd
+          ls -la
+          ls -la ansible || true
+          cat ansible/inventory_aws_ec2.yml || true
+          cat ansible/ansible.cfg || true
+
+      - name: Validate inventory plugin loads
+        env:
+          ANSIBLE_CONFIG: ansible/ansible.cfg
+        run: |
+          ansible-inventory -i ansible/inventory_aws_ec2.yml --graph -vvv
+
 
       - name: Run Ansible Playbook
         env:
