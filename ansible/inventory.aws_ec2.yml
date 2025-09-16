@@ -1,11 +1,14 @@
-plugin: amazon.aws.ec2
+plugin: amazon.aws.aws_ec2
 regions:
   - us-east-1                     
 filters:
-  tag:aws:autoscaling:groupName: my-app-asg   
+  "tag:aws:autoscaling:groupName": "my-app-asg"  
   instance-state-name: running
 hostnames:
   - public-ip-address               # or "private-ip-address" if you’re inside the VPC
 compose:
-  ansible_host: public_ip_address
+  ansible_host: "'ubuntu'"
 
+keyed_groups:
+  - key: tags["aws:autoscaling:groupName"]
+    prefix: tag_asg_

@@ -43,16 +43,11 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v3
 
-      - name: Prepare SSH key
-        run: |
-          echo "${{ secrets.EC2_SSH_KEY }}" > my_ec2_key
-          chmod 600 my_ec2_key
-
       - name: Install Ansible + collections
         run: |
           python3 -m pip install --upgrade pip
           pip install ansible-core
-          ansible-galaxy collection install community.docker
+          ansible-galaxy collection install amazon.aws community.docker
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -61,11 +56,15 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
-      - name: Add EC2 host key to known_hosts
+      - name: Prepare SSH key
         run: |
-          mkdir -p ~/.ssh
-          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+          echo "${{ secrets.EC2_SSH_KEY }}" > my_ec2_key
+          chmod 600 my_ec2_key
 
+      # - name: Add EC2 host key to known_hosts
+      #   run: |
+      #     mkdir -p ~/.ssh
+      #     ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
       - name: Run Ansible Playbook
         env:
