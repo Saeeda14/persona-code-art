@@ -71,7 +71,7 @@ jobs:
         env:
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          ansible-playbook -i ansible/inventory.ini ansible/deploy.yml \
+          ansible-playbook -i ansible/inventory_aws_ec2.yml ansible/deploy.yml \
             --private-key ./my_ec2_key \
             -u ${{ secrets.EC2_USER }} \
             -e "aws_account_id=${{ secrets.AWS_ACCOUNT_ID }}" \
