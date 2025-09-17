@@ -61,16 +61,16 @@ jobs:
 
       - name: Prepare SSH key
         run: |
-          echo "${{ secrets.EC2_SSH_KEY }}" > my_as_key
+          printf '%s' "${{ secrets.EC2_SSH_KEY }}" | tr -d '\r' > my_as_key
           chmod 600 my_as_key
 
 
       - name: Run Ansible Playbook
         env:
           IMAGE_TAG: ${{ github.sha }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: us-east-1
+          AWS_ACCESS_KEY_ID: ${{ env.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION:  ${{ env.AWS_DEFAULT_REGION }}
         run: |
           ansible-playbook -i ansible/inventory.ini ansible/deploy.yml \
             --private-key ./my_as_key \
