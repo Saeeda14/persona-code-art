@@ -63,11 +63,12 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p ~/.ssh
-          echo "${{ secrets.EC2_SSH_KEY_B64 }}" | base64 -d > ~/.ssh/my-new-ans-key
+          printf '%s' "${{ secrets.EC2_SSH_KEY }}" | tr -d '\r' > ~/.ssh/my-new-ans-key
           chmod 600 ~/.ssh/my-new-ans-key
+
           echo "Key exists?"
           ls -l ~/.ssh/my-new-ans-key
-          # Fingerprint proves key is valid & not passphrased
+
           ssh-keygen -lf ~/.ssh/my-new-ans-key
 
 
@@ -79,7 +80,6 @@ jobs:
           AWS_DEFAULT_REGION:  ${{ env.AWS_DEFAULT_REGION }}
           EC2_USER: ${{ secrets.EC2_USER }} 
         run: |
-          test -f ~/.ssh/my-new-ans-key || (echo "❌ key missing at ~/.ssh/my-new-ans-key"; exit 1)
           ansible-playbook -i ansible/inventory.ini ansible/deploy.yml \
             -u ${{ secrets.EC2_USER }} \
             --private-key ~/.ssh/my-new-ans-key \
