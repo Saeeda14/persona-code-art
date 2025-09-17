@@ -72,14 +72,18 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ env.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ env.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION:  ${{ env.AWS_DEFAULT_REGION }}
-          EC2_USER: ${{ secrets.EC2_USER }} 
+          TARGET_IP: 34.207.180.18
+          EC2_USER: ubuntu 
         run: |
           ansible-playbook -i ansible/inventory.ini ansible/deploy.yml \
             --private-key ~/.ssh/my-new-ans-key \
-            -u ${{ secrets.EC2_USER }} \
+            -u  \
             -e "aws_account_id=${{ secrets.AWS_ACCOUNT_ID }}" \
             -e "image_tag=${{ github.sha }}"
-
+            -u "${EC2_USER}" \
+            -e "aws_account_id=${{ secrets.AWS_ACCOUNT_ID }}" \
+            -e "image_tag=${IMAGE_TAG}" \
+            -e "target_ip=${TARGET_IP}" -vv
 
 
         
