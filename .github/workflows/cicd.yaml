@@ -64,6 +64,8 @@ jobs:
           mkdir -p ~/.ssh
           printf '%s' "${{ secrets.EC2_SSH_KEY }}" | tr -d '\r' > ~/.ssh/my_asg_key.pem
           chmod 600 ~/.ssh/my_asg_key.pem
+          cp ~/.ssh/my_asg_key.pem "$GITHUB_WORKSPACE/my_asg_key"
+          chmod 600 "$GITHUB_WORKSPACE/my_asg_key"
 
 
       - name: Run Ansible Playbook
@@ -73,7 +75,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ env.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION:  ${{ env.AWS_DEFAULT_REGION }}
           EC2_USER: ${{ secrets.EC2_USER }} 
-          SSH_KEY_PATH: ~/.ssh/my_asg_key.pem 
+          SSH_KEY_PATH: ${{ github.workspace }}/my_asg_key
         run: |
           ansible-playbook -i ansible/inventory.ini ansible/deploy.yml \
             --private-key ./my_asg_key \
