@@ -8,6 +8,7 @@
     - name: "gathering instance details"
       amazon.aws.ec2_instance_info:
         region: "{{ region }}"
+        aws_profile: default
         filters:
           "tag:aws:autoscaling:groupName": "{{ asg_name }}"
           instance-state-name: [ "running" ]
