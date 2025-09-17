@@ -68,7 +68,8 @@ jobs:
 
           echo "Key exists?"
           ls -l ~/.ssh/my-new-ans-key
-
+          
+          ssh-keygen -y -f ~/.ssh/my-new-ans-key > ~/.ssh/my-new-ans-key.pub
           ssh-keygen -lf ~/.ssh/my-new-ans-key
 
 
