@@ -61,8 +61,8 @@ jobs:
 
       - name: Prepare SSH key
         run: |
-          echo "${{ secrets.EC2_SSH_KEY }}" > my_as_key
-          chmod 600 my_as_key
+          echo "${{ secrets.EC2_SSH_KEY }}" > my_asg_key
+          chmod 600 my_asg_key
 
 
       - name: Run Ansible Playbook
@@ -73,7 +73,7 @@ jobs:
           AWS_DEFAULT_REGION: us-east-1
         run: |
           ansible-playbook -i ansible/inventory.ini ansible/deploy.yml \
-            --private-key ./my_as_key \
+            --private-key ./my_asg_key \
             -u ${{ secrets.EC2_USER }} \
             -e "aws_account_id=${{ secrets.AWS_ACCOUNT_ID }}" \
             -e "image_tag=${IMAGE_TAG}"
