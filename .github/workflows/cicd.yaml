@@ -75,11 +75,29 @@ jobs:
           TARGET_IP: 34.207.180.18
           EC2_USER: ubuntu 
         run: |
+          set -euo pipefail
+
+          KEY_PATH="$HOME/.ssh/my-new-ans-key"
+
+          echo "DEBUG: KEY_PATH=$KEY_PATH"
+          echo "DEBUG: TARGET_IP=${TARGET_IP}"
+          echo "DEBUG: EC2_USER=${EC2_USER}"
+
+          # sanity checks
+          if [ ! -f "$KEY_PATH" ]; then
+            echo "ERROR: private key not found at $KEY_PATH"
+            ls -la "$(dirname "$KEY_PATH")" || true
+            exit 1
+          fi
+
+          if [ -z "${EC2_USER:-}" ]; then
+            echo "ERROR: EC2_USER is empty. Set the secret EC2_USER to the login user (eg. ubuntu)."
+            exit 1
+          fi
+
+          echo "Running ansible-playbook against ${TARGET_IP}..."
           ansible-playbook -i ansible/inventory.ini ansible/deploy.yml \
-            --private-key ~/.ssh/my-new-ans-key \
-            -u  \
-            -e "aws_account_id=${{ secrets.AWS_ACCOUNT_ID }}" \
-            -e "image_tag=${{ github.sha }}"
+            --private-key "$KEY_PATH" \
             -u "$EC2_USER" \
             -e "aws_account_id=${{ secrets.AWS_ACCOUNT_ID }}" \
             -e "image_tag=${IMAGE_TAG}" \
