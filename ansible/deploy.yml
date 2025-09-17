@@ -13,7 +13,7 @@
 
 
   tasks:
-  
+
     - name: "gathering instance details"
       amazon.aws.ec2_instance_info:
         region: "{{ region }}"
@@ -28,7 +28,7 @@
         hostname: "{{ item.public_ip_address }}"
         ansible_host: "{{ item.public_ip_address }}"
         ansible_user: "{{ lookup('env','EC2_USER') | default('ubuntu') }}"
-        ansible_ssh_private_key_file: "{{ lookup('env','GITHUB_WORKSPACE') }}/my_as_key"
+        ansible_ssh_private_key_file: "{{ lookup('env','GITHUB_WORKSPACE') }}/my_asg_key"
         ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
       loop: "{{ instance_details.instances }}"
 
