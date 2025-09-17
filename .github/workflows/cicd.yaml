@@ -80,7 +80,7 @@ jobs:
             -u  \
             -e "aws_account_id=${{ secrets.AWS_ACCOUNT_ID }}" \
             -e "image_tag=${{ github.sha }}"
-            -u "${EC2_USER}" \
+            -u "$EC2_USER" \
             -e "aws_account_id=${{ secrets.AWS_ACCOUNT_ID }}" \
             -e "image_tag=${IMAGE_TAG}" \
             -e "target_ip=${TARGET_IP}" -vv
