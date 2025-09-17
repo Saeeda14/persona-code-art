@@ -59,13 +59,12 @@ jobs:
       - name: Verify AWS identity
         run: aws sts get-caller-identity
 
-      - name: Prepare SSH key
+      - name: Reconstruct SSH key (from base64) and verify
         run: |
-          mkdir -p ~/.ssh
-          printf '%s' "${{ secrets.EC2_SSH_KEY }}" | tr -d '\r' > ~/.ssh/my-new-ans-key
-          chmod 600 ~/.ssh/my-new-ans-key
-          cp ~/.ssh/my-new-ans-key "$GITHUB_WORKSPACE/my-new-ans-key"
-          chmod 600 "$GITHUB_WORKSPACE/my-new-ans-key"
+          set -euo pipefail
+          echo "${{ secrets.EC2_SSH_KEY_B64 }}" | base64 -d > ./my-new-ans-key
+          chmod 600 ./my-new-ans-key
+          ssh-keygen -lf ./my-new-ans-key
 
 
       - name: Run Ansible Playbook
@@ -75,10 +74,9 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ env.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION:  ${{ env.AWS_DEFAULT_REGION }}
           EC2_USER: ${{ secrets.EC2_USER }} 
-          SSH_KEY_PATH: ${{ github.workspace }}/my-new-ans-key
         run: |
           ansible-playbook -i ansible/inventory.ini ansible/deploy.yml \
             --private-key ./my-new-ans-key \
             -u ${{ secrets.EC2_USER }} \
             -e "aws_account_id=${{ secrets.AWS_ACCOUNT_ID }}" \
-            -e "image_tag=${IMAGE_TAG}"
+            -e "image_tag=${IMAGE_TAG}" -vv
