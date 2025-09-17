@@ -59,51 +59,23 @@ jobs:
       - name: Verify AWS identity
         run: aws sts get-caller-identity
 
-      - name: Prepare SSH key (raw secret) + fingerprint
-        env:
-          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+      - name: Reconstruct SSH key
         run: |
-          set -e
           mkdir -p ~/.ssh
-          # write and normalize (strip CR)
-          printf '%s' "$EC2_SSH_KEY" | tr -d '\r' > ~/.ssh/my-new-ans-key
+          echo "${{ secrets.EC2_SSH_KEY_B64 }}" | base64 -d > ~/.ssh/my-new-ans-key
           chmod 600 ~/.ssh/my-new-ans-key
-          echo "Runner fingerprint:"
-          ssh-keygen -y -f ~/.ssh/my-new-ans-key | ssh-keygen -lf -
+          ssh-keygen -y -f ~/.ssh/my-new-ans-key > ~/.ssh/my-new-ans-key.pub
+          ssh-keygen -lf ~/.ssh/my-new-ans-key.pub
 
 
       - name: Run Ansible Playbook
         env:
           IMAGE_TAG: ${{ github.sha }}
-          AWS_ACCESS_KEY_ID: ${{ env.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ env.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION:  ${{ env.AWS_DEFAULT_REGION }}
-          TARGET_IP: 34.207.180.18
-          EC2_USER: ubuntu 
+          TARGET_IP: 34.207.180.18     
+          EC2_USER: ubuntu             
         run: |
-          set -euo pipefail
-
-          KEY_PATH="$HOME/.ssh/my-new-ans-key"
-
-          echo "DEBUG: KEY_PATH=$KEY_PATH"
-          echo "DEBUG: TARGET_IP=${TARGET_IP}"
-          echo "DEBUG: EC2_USER=${EC2_USER}"
-
-          # sanity checks
-          if [ ! -f "$KEY_PATH" ]; then
-            echo "ERROR: private key not found at $KEY_PATH"
-            ls -la "$(dirname "$KEY_PATH")" || true
-            exit 1
-          fi
-
-          if [ -z "${EC2_USER:-}" ]; then
-            echo "ERROR: EC2_USER is empty. Set the secret EC2_USER to the login user (eg. ubuntu)."
-            exit 1
-          fi
-
-          echo "Running ansible-playbook against ${TARGET_IP}..."
           ansible-playbook -i ansible/inventory.ini ansible/deploy.yml \
-            --private-key "$KEY_PATH" \
+            --private-key ~/.ssh/my-new-ans-key \
             -u "$EC2_USER" \
             -e "aws_account_id=${{ secrets.AWS_ACCOUNT_ID }}" \
             -e "image_tag=${IMAGE_TAG}" \
