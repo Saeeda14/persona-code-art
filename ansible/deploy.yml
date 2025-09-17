@@ -13,11 +13,7 @@
 
 
   tasks:
-
-    - name: "Sanity: who am I?"
-      command: aws sts get-caller-identity
-      changed_when: false
-
+  
     - name: "gathering instance details"
       amazon.aws.ec2_instance_info:
         region: "{{ region }}"
