@@ -59,11 +59,17 @@ jobs:
       - name: Verify AWS identity
         run: aws sts get-caller-identity
 
-      - name: Prepare SSH key
+      - name: Prepare SSH key (raw secret) + fingerprint
+        env:
+          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
         run: |
+          set -e
           mkdir -p ~/.ssh
-          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/my-new-ans-key
+          # write and normalize (strip CR)
+          printf '%s' "$EC2_SSH_KEY" | tr -d '\r' > ~/.ssh/my-new-ans-key
           chmod 600 ~/.ssh/my-new-ans-key
+          echo "Runner fingerprint:"
+          ssh-keygen -y -f ~/.ssh/my-new-ans-key | ssh-keygen -lf -
 
 
       - name: Run Ansible Playbook
