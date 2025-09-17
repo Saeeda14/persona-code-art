@@ -62,9 +62,13 @@ jobs:
       - name: Reconstruct SSH key (from base64) and verify
         run: |
           set -euo pipefail
-          echo "${{ secrets.EC2_SSH_KEY_B64 }}" | base64 -d > ./my-new-ans-key
-          chmod 600 ./my-new-ans-key
-          ssh-keygen -lf ./my-new-ans-key
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY_B64 }}" | base64 -d > ~/.ssh/my-new-ans-key
+          chmod 600 ~/.ssh/my-new-ans-key
+          echo "Key exists?"
+          ls -l ~/.ssh/my-new-ans-key
+          # Fingerprint proves key is valid & not passphrased
+          ssh-keygen -lf ~/.ssh/my-new-ans-key
 
 
       - name: Run Ansible Playbook
@@ -75,8 +79,13 @@ jobs:
           AWS_DEFAULT_REGION:  ${{ env.AWS_DEFAULT_REGION }}
           EC2_USER: ${{ secrets.EC2_USER }} 
         run: |
+          test -f ~/.ssh/my-new-ans-key || (echo "❌ key missing at ~/.ssh/my-new-ans-key"; exit 1)
           ansible-playbook -i ansible/inventory.ini ansible/deploy.yml \
-            --private-key ./my-new-ans-key \
             -u ${{ secrets.EC2_USER }} \
+            --private-key ~/.ssh/my-new-ans-key \
             -e "aws_account_id=${{ secrets.AWS_ACCOUNT_ID }}" \
             -e "image_tag=${IMAGE_TAG}" -vv
+
+
+
+        
