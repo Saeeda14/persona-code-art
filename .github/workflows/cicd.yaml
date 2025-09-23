@@ -1,4 +1,4 @@
-name: Deploy Docker Image to ECR-
+name: Deploy Docker Image to ECR - 
 
 on: 
   push: 
@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps: 
-    - name: check out code 
+    - name: Check out code 
       uses: actions/checkout@v3
 
     - name: Configure AWS credentials
@@ -34,18 +34,22 @@ jobs:
         docker buildx build --platform linux/amd64,linux/arm64 -t $REGISTRY/$REPOSITORY:$IMAGE_TAG --push .
 
 
-    - name: Add controller SSH private key
+    - name: Start ssh-agent
+      uses: webfactory/ssh-agent@v0.9.0
+      with:
+        ssh-private-key: ${{ secrets.ANSIBLE_SSH_PRIVATE_KEY }}
+
+
+    - name: Trust server host key
       run: |
         mkdir -p ~/.ssh
-        echo "${{ secrets.CONTROLLER_SSH_KEY }}" > ~/.ssh/controller.pem
-        chmod 600 ~/.ssh/controller.pem
+        ssh-keyscan -H "${{ secrets.ANSIBLE_HOST }}" >> ~/.ssh/known_hosts
 
     - name: Run Ansible Playbook
       env:
         IMAGE_TAG: ${{ github.sha }}           
       run: |
-        ssh -o StrictHostKeyChecking=no -i ~/.ssh/controller.pem \
-        ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
+        ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.ANSIBLE_HOST }} \
         "cd ~/ansible && \
         ansible-playbook playbooks/deploy.yml \
           -e aws_account_id='${{ secrets.AWS_ACCOUNT_ID }}' \
