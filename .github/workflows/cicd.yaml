@@ -56,7 +56,7 @@ jobs:
             if [ -d ansible/.git ]; then
               git -C ansible pull --ff-only
             else
-              git clone https://${REPO_B_TOKEN}@github.com/sae-org/ansible-controller-config.git ansible
+              git clone https://${REPO_B_TOKEN}@github.com/sae-org/ansible-controller-config.git projects
             fi
 
             cd ansible
