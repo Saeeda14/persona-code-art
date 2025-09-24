@@ -24,7 +24,6 @@ jobs:
       id: ecr
       uses: aws-actions/amazon-ecr-login@v2
 
-
     - name: Build & push (tag with commit SHA)
       env:
         REGISTRY: ${{ steps.ecr.outputs.registry }}
@@ -34,14 +33,21 @@ jobs:
         docker buildx create --use 
         docker buildx build --platform linux/amd64,linux/arm64 -t $REGISTRY/$REPOSITORY:$IMAGE_TAG --push .
 
-    - name: Trigger Repo B deploy with this image tag
-      uses: peter-evans/repository-dispatch@v3
-      with:
-        token: ${{ secrets.REPO_B_DISPATCH_TOKEN }}
-        repository: sae-org/ansible-controller-config   # Repo B
-        event-type: deploy-from-repo-a
-        client-payload: >-
-          {"image_tag":"${{ github.sha }}",
-            "ecr_repo":"my-dev-ecr-repo",
-            "region":"us-east-1",
-            "aws_account_id":"${{ secrets.AWS_ACCOUNT_ID }}"}
+    - name: Start ssh-agent 
+      uses: webfactory/ssh-agent@v0.9.0 
+      with: 
+        ssh-private-key: ${{ secrets.ANSIBLE_SSH_PRIVATE_KEY }}
+
+    - name: Trust server host key 
+      run: | 
+        mkdir -p ~/.ssh ssh-keyscan -H "${{ secrets.ANSIBLE_HOST }}" >> ~/.ssh/known_hosts
+
+    - name: Run Ansible Playbook 
+      env: 
+        IMAGE_TAG: ${{ github.sha }} 
+      run: | 
+        ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.ANSIBLE_HOST }} \ 
+          "cd ~/ansible && \ 
+          ansible-playbook playbooks/deploy.yml \ 
+          -e aws_account_id='${{ secrets.AWS_ACCOUNT_ID }}' \ 
+          -e image_tag='${IMAGE_TAG}'"
