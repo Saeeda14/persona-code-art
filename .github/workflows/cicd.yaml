@@ -45,13 +45,26 @@ jobs:
         mkdir -p ~/.ssh
         ssh-keyscan -H "${{ secrets.ANSIBLE_HOST }}" >> ~/.ssh/known_hosts
 
-    - name: Run Ansible Playbook
+    - name: Pull Repo B (ansible-controller-config) code, deploy and then run Ansible Playbook
       env:
-        IMAGE_TAG: ${{ github.sha }}           
+        IMAGE_TAG: ${{ github.sha }} 
+        REPO_B_TOKEN: ${{ secrets.REPO_B_TOKEN }}       
       run: |
-        ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.ANSIBLE_HOST }} \
-        "cd ~/ansible && \
-        ansible-playbook playbooks/deploy.yml \
-          -e aws_account_id='${{ secrets.AWS_ACCOUNT_ID }}' \
-          -e image_tag='${IMAGE_TAG}'"
-        
+        ssh -o IdentitiesOnly=yes -o StrictHostKeyChecking=no \
+          ${{ secrets.EC2_USER }}@${{ secrets.ANSIBLE_HOST }} "
+            set -euo pipefail
+            cd /home/ubuntu
+
+            # Use HTTPS with token instead of SSH
+            if [ -d ansible/.git ]; then
+              git -C ansible pull --ff-only
+            else
+              git clone https://${REPO_B_TOKEN}@github.com/sae-org/ansible-controller-config.git ansible
+            fi
+
+            cd ansible
+            ansible-playbook playbooks/deploy.yml \
+              -e aws_account_id='${{ secrets.AWS_ACCOUNT_ID }}' \
+              -e ecr_repo='my-dev-ecr-repo' \
+              -e image_tag='${IMAGE_TAG}'
+        "
