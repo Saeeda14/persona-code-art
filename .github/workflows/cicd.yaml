@@ -40,7 +40,8 @@ jobs:
 
     - name: Trust server host key 
       run: | 
-        mkdir -p ~/.ssh ssh-keyscan -H "${{ secrets.ANSIBLE_HOST }}" >> ~/.ssh/known_hosts
+        mkdir -p ~/.ssh 
+        ssh-keyscan -H "${{ secrets.ANSIBLE_HOST }}" >> ~/.ssh/known_hosts
 
     - name: Run Ansible Playbook 
       env: 
