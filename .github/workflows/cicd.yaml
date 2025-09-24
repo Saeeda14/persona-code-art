@@ -33,6 +33,11 @@ jobs:
         docker buildx create --use 
         docker buildx build --platform linux/amd64,linux/arm64 -t $REGISTRY/$REPOSITORY:$IMAGE_TAG --push .
 
+  deploy: 
+    name: Ansible playbook run 
+    runs-on: ubuntu-latest
+
+    steps:
     - name: Write controller SSH key & trust host
       run: |
         mkdir -p ~/.ssh
@@ -59,7 +64,7 @@ jobs:
               git clone https://${REPO_B_TOKEN}@github.com/sae-org/ansible-controller-config.git projects
             fi
 
-            cd ansible
+            cd projects/ansible
             ansible-playbook playbooks/deploy.yml \
               -e aws_account_id='${{ secrets.AWS_ACCOUNT_ID }}' \
               -e ecr_repo='my-dev-ecr-repo' \
