@@ -24,43 +24,24 @@ jobs:
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v2
 
-    - name: Build, tag, and push docker image to Amazon ECR
+    - name: Build & push (tag with commit SHA)
       env:
-        REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        REPOSITORY: my-dev-ecr-repo
-        IMAGE_TAG: ${{ github.sha }}
+        REGISTRY: ${{ steps.ecr.outputs.registry }}
       run: |
-        docker buildx create --use 
-        docker buildx build --platform linux/amd64,linux/arm64 -t $REGISTRY/$REPOSITORY:$IMAGE_TAG --push .
+        docker buildx create --use
+        docker buildx build \
+          --platform linux/amd64,linux/arm64 \
+          -t $REGISTRY/${{ env.ECR_REPO }}:${GITHUB_SHA} \
+          --push .
 
-    - name: Write controller SSH key & trust host
-      run: |
-        mkdir -p ~/.ssh
-        printf '%s' "${{ secrets.ANSIBLE_SSH_PRIVATE_KEY }}" > ~/.ssh/controller.pem
-        chmod 600 ~/.ssh/controller.pem
-        ssh-keyscan -H "${{ secrets.ANSIBLE_HOST }}" >> ~/.ssh/known_hosts
-
-    - name: Pull Repo B (ansible-controller-config) code, deploy and then run Ansible Playbook
-      env:
-        IMAGE_TAG: ${{ github.sha }} 
-        REPO_B_TOKEN: ${{ secrets.REPO_B_TOKEN }}       
-      run: |
-        ssh -o IdentitiesOnly=yes -o StrictHostKeyChecking=no \
-        -i ~/.ssh/controller.pem \
-          ${{ secrets.EC2_USER }}@${{ secrets.ANSIBLE_HOST }} "
-            set -euo pipefail
-            cd /home/ubuntu
-
-            # Use HTTPS with token instead of SSH
-            if [ -d projects/.git ]; then
-              git -C projects pull --ff-only
-            else
-              git clone https://${REPO_B_TOKEN}@github.com/sae-org/ansible-controller-config.git projects
-            fi
-
-            cd projects/ansible
-            ansible-playbook playbooks/deploy.yml \
-              -e aws_account_id='${{ secrets.AWS_ACCOUNT_ID }}' \
-              -e ecr_repo='my-dev-ecr-repo' \
-              -e image_tag='${IMAGE_TAG}'
-        "
+    - name: Trigger Repo B deploy with this image tag
+      uses: peter-evans/repository-dispatch@v3
+      with:
+        token: ${{ secrets.REPO_B_DISPATCH_TOKEN }}
+        repository: sae-org/ansible-controller-config   # Repo B
+        event-type: deploy-from-repo-a
+        client-payload: >-
+          {"image_tag":"${{ github.sha }}",
+            "ecr_repo":"my-dev-ecr-repo",
+            "region":"us-east-1",
+            "aws_account_id":"${{ secrets.AWS_ACCOUNT_ID }}"}
