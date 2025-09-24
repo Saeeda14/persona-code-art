@@ -21,17 +21,18 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
     - name: Login to Amazon ECR
-      id: login-ecr
+      id: ecr
       uses: aws-actions/amazon-ecr-login@v2
 
 
-    - name: Build & push
-      run: |
-        docker buildx create --use
-        docker buildx build \
-        --platform linux/amd64,linux/arm64 \
-        -t "${{ steps.ecr.outputs.registry }}/my-dev-ecr-repo:${{ github.sha }}" \
-        --push .
+    - name: Build & push (tag with commit SHA)
+      env:
+        REGISTRY: ${{ steps.ecr.outputs.registry }}
+        REPOSITORY: my-dev-ecr-repo                     
+        IMAGE_TAG: ${{ github.sha }} 
+      run: | 
+        docker buildx create --use 
+        docker buildx build --platform linux/amd64,linux/arm64 -t $REGISTRY/$REPOSITORY:$IMAGE_TAG --push .
 
     - name: Trigger Repo B deploy with this image tag
       uses: peter-evans/repository-dispatch@v3
