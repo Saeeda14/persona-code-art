@@ -33,18 +33,12 @@ jobs:
         docker buildx create --use 
         docker buildx build --platform linux/amd64,linux/arm64 -t $REGISTRY/$REPOSITORY:$IMAGE_TAG --push .
 
-  deploy: 
-    name: Ansible playbook run 
-    runs-on: ubuntu-latest
-
-    steps:
     - name: Write controller SSH key & trust host
       run: |
         mkdir -p ~/.ssh
         printf '%s' "${{ secrets.ANSIBLE_SSH_PRIVATE_KEY }}" > ~/.ssh/controller.pem
         chmod 600 ~/.ssh/controller.pem
         ssh-keyscan -H "${{ secrets.ANSIBLE_HOST }}" >> ~/.ssh/known_hosts
-
 
     - name: Pull Repo B (ansible-controller-config) code, deploy and then run Ansible Playbook
       env:
