@@ -52,7 +52,7 @@ jobs:
             cd /home/ubuntu
 
             # Use HTTPS with token instead of SSH
-            if [ -d ansible/.git ]; then
+            if [ -d projects/.git ]; then
               git -C ansible pull --ff-only
             else
               git clone https://${REPO_B_TOKEN}@github.com/sae-org/ansible-controller-config.git projects
