@@ -53,7 +53,7 @@ jobs:
 
             # Use HTTPS with token instead of SSH
             if [ -d projects/.git ]; then
-              git -C ansible pull --ff-only
+              git -C projects pull --ff-only
             else
               git clone https://${REPO_B_TOKEN}@github.com/sae-org/ansible-controller-config.git projects
             fi
