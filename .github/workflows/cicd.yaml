@@ -27,11 +27,13 @@ jobs:
     - name: Build & push (tag with commit SHA)
       env:
         REGISTRY: ${{ steps.ecr.outputs.registry }}
+        REPOSITORY: my-dev-ecr-repo                     
+        IMAGE_TAG: ${{ github.sha }} 
       run: |
         docker buildx create --use
         docker buildx build \
           --platform linux/amd64,linux/arm64 \
-          -t $REGISTRY/${{ env.ECR_REPO }}:${GITHUB_SHA} \
+          -t "$REGISTRY/$REPOSITORY:$IMAGE_TAG" \
           --push .
 
     - name: Trigger Repo B deploy with this image tag
