@@ -43,12 +43,11 @@ jobs:
         mkdir -p ~/.ssh 
         ssh-keyscan -H "${{ secrets.ANSIBLE_HOST }}" >> ~/.ssh/known_hosts
 
-    - name: Run Ansible Playbook 
-      env: 
-        IMAGE_TAG: ${{ github.sha }} 
-      run: | 
-        ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.ANSIBLE_HOST }} \ 
-          "cd ~/ansible && \ 
-          ansible-playbook playbooks/deploy.yml \ 
-          -e aws_account_id='${{ secrets.AWS_ACCOUNT_ID }}' \ 
-          -e image_tag='${IMAGE_TAG}'"
+    - name: Run Ansible Playbook
+      env:
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        ssh -o StrictHostKeyChecking=no "${{ secrets.EC2_USER }}@${{ secrets.ANSIBLE_HOST }}" \
+          "cd ~/ansible && ansible-playbook playbooks/deploy.yml \
+            -e aws_account_id='${{ secrets.AWS_ACCOUNT_ID }}' \
+            -e image_tag='${IMAGE_TAG}'"
