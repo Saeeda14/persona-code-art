@@ -24,14 +24,17 @@ jobs:
       id: ecr
       uses: aws-actions/amazon-ecr-login@v2
 
-    - name: Build & push (tag with commit SHA)
+    - name: Build & push (tag with commit SHA + dev (for user data in asg purpose) )
       env:
         REGISTRY: ${{ steps.ecr.outputs.registry }}
         REPOSITORY: my-dev-ecr-repo-1                     
         IMAGE_TAG: ${{ github.sha }} 
       run: | 
         docker buildx create --use 
-        docker buildx build --platform linux/amd64,linux/arm64 -t $REGISTRY/$REPOSITORY:$IMAGE_TAG --push .
+        docker buildx build --platform linux/amd64,linux/arm64 \
+        -t $REGISTRY/$REPOSITORY:$IMAGE_TAG \
+        -t "$REGISTRY/$REPOSITORY:dev" \
+        --push .
 
     - name: Start ssh-agent 
       uses: webfactory/ssh-agent@v0.9.0 
