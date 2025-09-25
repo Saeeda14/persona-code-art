@@ -1,4 +1,4 @@
-name: Deploy Docker Image to ECR and then ping ansible repo 
+name: Deploy Docker Image to ECR and then run ansible laybook 
 
 on: 
   push: 
