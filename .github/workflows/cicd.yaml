@@ -27,7 +27,7 @@ jobs:
     - name: Build & push (tag with commit SHA)
       env:
         REGISTRY: ${{ steps.ecr.outputs.registry }}
-        REPOSITORY: my-dev-ecr-repo                     
+        REPOSITORY: my-dev-ecr-repo-1                     
         IMAGE_TAG: ${{ github.sha }} 
       run: | 
         docker buildx create --use 
