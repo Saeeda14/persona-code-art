@@ -57,7 +57,10 @@ jobs:
         ANS_VAULT_PASS: ${{ secrets.ANSIBLE_VAULT_PASS }}
       run: |
         ssh -o StrictHostKeyChecking=no "${{ secrets.EC2_USER }}@${{ secrets.ANSIBLE_HOST }}" \ 
-          "cd ~/ansible
+          "set -e 
+          export ANS_VAULT_PASS='${ANS_VAULT_PASS}'
+          cd ~/ansible
+
           ansible-playbook playbooks/deploy.yml -e @group_vars/all/vault.yml --vault-password-file <(printf '%s' "$ANS_VAULT_PASS")
           "
 
