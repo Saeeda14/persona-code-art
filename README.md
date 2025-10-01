@@ -1,5 +1,7 @@
 # 🌐 `my-website` — App + Docker + CI/CD (ECR → Ansible)
 
+👉 [Visit the site here](https://saeeda.me)
+
 This repository contains the website application (codebase generated with **Lovable**) and a **GitHub Actions** pipeline that:
 
 1) Builds a production image with a **multi-stage Dockerfile**  
